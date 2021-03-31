@@ -23,23 +23,6 @@ void Initialize()
 	//  - Change materials
 }
 
-static void DisplayError(const char* fmt, ...)
-{
-	char buf[200];
-
-	va_list args;
-	va_start(args, fmt);
-	vsprintf(buf, fmt, args);
-	va_end(args);
-
-	MessageBoxA(NULL, buf, "SporeCrashFix", MB_OK | MB_ICONERROR);
-}
-
-static uint32_t RvaToAddress(uint32_t rva_addr)
-{
-	return (uint32_t)((uint32_t)(GetModuleHandle(NULL)) + rva_addr);
-}
-
 // The game seems to crash randomly when respawning in the creature stage,
 // the original function can't seem to handle arg3 when it's nullptr,
 // to fix the crash, return true whenever arg3 is nullptr
