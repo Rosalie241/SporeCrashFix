@@ -1,0 +1,7 @@
+<mod displayName="SporeCrashFix" 
+	unique="SporeCrashFix" 
+	description="This is a Spore mod which fixes the common (yet random) crash in the creature stage" 
+	installerSystemVersion="1.0.1.1" 
+	dllsBuild="2.5.20">
+	<prerequisite>SporeCrashFix.dll</prerequisite>
+</mod>
