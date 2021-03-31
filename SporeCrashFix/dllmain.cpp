@@ -1,12 +1,12 @@
-/*
- * SporeCrashFix - https://github.com/Rosalie241/SporeFixCrash
- *  Copyright (C) 2021 Rosalie Wanders <rosalie@mailbox.org>
- *
- *  This program is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License version 3.
- *  You should have received a copy of the GNU General Public License
- *  along with this program. If not, see <https://www.gnu.org/licenses/>.
- */
+//
+// SporeCrashFix - https://github.com/Rosalie241/SporeFixCrash
+//  Copyright (C) 2021 Rosalie Wanders <rosalie@mailbox.org>
+//
+//  This program is free software: you can redistribute it and/or modify
+//  it under the terms of the GNU General Public License version 3.
+//  You should have received a copy of the GNU General Public License
+//  along with this program. If not, see <https://www.gnu.org/licenses/>.
+//
 
 // dllmain.cpp : Defines the entry point for the DLL application.
 #define _CRT_SECURE_NO_WARNINGS
@@ -40,23 +40,20 @@ static uint32_t RvaToAddress(uint32_t rva_addr)
 	return (uint32_t)((uint32_t)(GetModuleHandle(NULL)) + rva_addr);
 }
 
-/*
-	The game seems to crash randomly when respawning in the creature stage,
-	the main problem seems to be that arg3 is NULL, which the original function cannot handle,
-	to fix the crash, return whenever arg3 is NULL
-*/
-static void (*game_function_real)(void*, void*, void*) = NULL;
-static void game_function_detour(void* arg1, void* arg2, void* arg3)
-{
-	/* fix unhandled NULL argument in original function */
-	if (arg3 == NULL)
+// The game seems to crash randomly when respawning in the creature stage,
+// the original function can't seem to handle arg3 when it's nullptr,
+// to fix the crash, return true whenever arg3 is nullptr
+static_detour(GameFunctionDetour, bool(void*, void*, void*)) {
+	bool detoured(void* arg1, void* arg2, void* arg3)
 	{
-		return;
+		if (arg3 == nullptr)
+		{
+			return true;
+		}
+
+		return original_function(arg1, arg2, arg3);
 	}
-
-	game_function_real(arg1, arg2, arg3);
-}
-
+};
 
 void Dispose()
 {
@@ -65,19 +62,8 @@ void Dispose()
 
 void AttachDetours()
 {
-	uint32_t addr = RvaToAddress(0x965BE0);
-	if (addr == 0)
-	{
-		return;
-	}
-
-	game_function_real = (void (*)(void*, void*, void*))addr;
-
-	if (DetourAttach(&(PVOID&)game_function_real, (PVOID)game_function_detour) != NO_ERROR)
-	{
-		DisplayError("DetourAttach(game_function_real) Failed: %li", GetLastError());
-		return;
-	}
+	// RVA of function = 0x965BE0
+	GameFunctionDetour::attach(Address(ModAPI::ChooseAddress(0xD65140, 0xD65BE0)));
 
 	// Call the attach() method on any detours you want to add
 	// For example: cViewer_SetRenderType_detour::attach(GetAddress(cViewer, SetRenderType));
