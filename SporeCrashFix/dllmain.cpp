@@ -12,21 +12,32 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include "stdafx.h"
 
-void Initialize()
+//
+// Helper functions
+//
+
+static void DisplayError(const char* fmt, ...)
 {
-	// This method is executed when the game starts, before the user interface is shown
-	// Here you can do things such as:
-	//  - Add new cheats
-	//  - Add new simulator classes
-	//  - Add new game modes
-	//  - Add new space tools
-	//  - Change materials
+	char buf[200];
+
+	va_list args;
+	va_start(args, fmt);
+	vsprintf(buf, fmt, args);
+	va_end(args);
+
+	MessageBoxA(NULL, buf, "SporeCrashFix", MB_OK | MB_ICONERROR);
 }
 
-// The game seems to crash randomly when respawning in the creature stage,
-// the original function can't seem to handle arg3 when it's nullptr,
-// to fix the crash, return true whenever arg3 is nullptr
-static_detour(GameFunctionDetour, bool(void*, void*, void*)) {
+//
+// Detoured Functions
+//
+
+// Creature stage
+//
+
+// The game seems to crash when the player dies when it has a 'buddy',
+// the crash happens when arg3 is a nullptr
+static_detour(CreatureStageFunction1Detour, bool(void*, void*, void*)) {
 	bool detoured(void* arg1, void* arg2, void* arg3)
 	{
 		if (arg3 == nullptr)
@@ -38,6 +49,38 @@ static_detour(GameFunctionDetour, bool(void*, void*, void*)) {
 	}
 };
 
+// Tribal stage
+//
+
+// The game seems to crash randomly in the tribal stage,
+// the crash happens when arg3 is a nullptr
+static_detour(TribalStageFunction1Detour, void* (void*, void*, void*, void*)) {
+	void* detoured(void* arg1, void* arg2, void* arg3, void* arg4)
+	{
+		if (arg3 == nullptr)
+		{
+			return nullptr;
+		}
+
+		return original_function(arg1, arg2, arg3, arg4);
+	}
+};
+
+//
+// Exported Functions
+//
+
+void Initialize()
+{
+	// This method is executed when the game starts, before the user interface is shown
+	// Here you can do things such as:
+	//  - Add new cheats
+	//  - Add new simulator classes
+	//  - Add new game modes
+	//  - Add new space tools
+	//  - Change materials
+}
+
 void Dispose()
 {
 	// This method is called when the game is closing
@@ -46,7 +89,10 @@ void Dispose()
 void AttachDetours()
 {
 	// RVA of function = 0x965BE0
-	GameFunctionDetour::attach(Address(ModAPI::ChooseAddress(0xD65140, 0xD65BE0)));
+	CreatureStageFunction1Detour::attach(Address(0x965BE0 + 0x400000));
+
+	// RVA of function = 0x972720
+	TribalStageFunction1Detour::attach(Address(0x972720 + 0x400000));
 
 	// Call the attach() method on any detours you want to add
 	// For example: cViewer_SetRenderType_detour::attach(GetAddress(cViewer, SetRenderType));
