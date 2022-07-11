@@ -66,6 +66,20 @@ static_detour(TribalStageFunction1Detour, void* (void*, void*, void*, void*)) {
 	}
 };
 
+#ifdef _DEBUG
+LONG WINAPI UnhandledExceptionHandler(_EXCEPTION_POINTERS* ExceptionInfo)
+{
+	DisplayError("crash detected, attach a debugger now!");
+	return EXCEPTION_CONTINUE_SEARCH;
+}
+
+static LPTOP_LEVEL_EXCEPTION_FILTER (WINAPI* SetUnhandledExceptionFilter_real)(LPTOP_LEVEL_EXCEPTION_FILTER) = SetUnhandledExceptionFilter;
+static LPTOP_LEVEL_EXCEPTION_FILTER WINAPI SetUnhandledExceptionFilter_detour(LPTOP_LEVEL_EXCEPTION_FILTER)
+{
+	return SetUnhandledExceptionFilter_real(UnhandledExceptionHandler);
+}
+#endif // _DEBUG
+
 //
 // Exported Functions
 //
@@ -93,6 +107,10 @@ void AttachDetours()
 
 	// RVA of function = 0x972720
 	TribalStageFunction1Detour::attach(Address(0x972720 + 0x400000));
+
+#ifdef _DEBUG
+	DetourAttach(&(PVOID&)SetUnhandledExceptionFilter_real, SetUnhandledExceptionFilter_detour);
+#endif // _DEBUG
 
 	// Call the attach() method on any detours you want to add
 	// For example: cViewer_SetRenderType_detour::attach(GetAddress(cViewer, SetRenderType));
