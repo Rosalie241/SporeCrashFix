@@ -74,9 +74,16 @@ LONG WINAPI UnhandledExceptionHandler(_EXCEPTION_POINTERS* ExceptionInfo)
 }
 
 static LPTOP_LEVEL_EXCEPTION_FILTER (WINAPI* SetUnhandledExceptionFilter_real)(LPTOP_LEVEL_EXCEPTION_FILTER) = SetUnhandledExceptionFilter;
-static LPTOP_LEVEL_EXCEPTION_FILTER WINAPI SetUnhandledExceptionFilter_detour(LPTOP_LEVEL_EXCEPTION_FILTER)
+static LPTOP_LEVEL_EXCEPTION_FILTER WINAPI SetUnhandledExceptionFilter_detour(LPTOP_LEVEL_EXCEPTION_FILTER lpTopLevelExceptionFilter)
 {
-	return SetUnhandledExceptionFilter_real(UnhandledExceptionHandler);
+	DWORD_PTR base_addr = (DWORD_PTR)GetModuleHandle(NULL);
+
+	if ((DWORD_PTR)lpTopLevelExceptionFilter == (base_addr + 0x51e9e0))
+	{
+		return SetUnhandledExceptionFilter_real(UnhandledExceptionHandler);
+	}
+
+	return SetUnhandledExceptionFilter_real(lpTopLevelExceptionFilter);
 }
 #endif // _DEBUG
 
