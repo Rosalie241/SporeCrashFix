@@ -102,11 +102,13 @@ void Dispose()
 
 void AttachDetours()
 {
+	DWORD_PTR base_addr = (DWORD_PTR)GetModuleHandle(NULL);
+
 	// RVA of function = 0x965BE0
-	CreatureStageFunction1Detour::attach(Address(0x965BE0 + 0x400000));
+	CreatureStageFunction1Detour::attach(base_addr + 0x965BE0);
 
 	// RVA of function = 0x972720
-	TribalStageFunction1Detour::attach(Address(0x972720 + 0x400000));
+	TribalStageFunction1Detour::attach(base_addr + 0x972720);
 
 #ifdef _DEBUG
 	DetourAttach(&(PVOID&)SetUnhandledExceptionFilter_real, SetUnhandledExceptionFilter_detour);
