@@ -76,9 +76,7 @@ LONG WINAPI UnhandledExceptionHandler(_EXCEPTION_POINTERS* ExceptionInfo)
 static LPTOP_LEVEL_EXCEPTION_FILTER (WINAPI* SetUnhandledExceptionFilter_real)(LPTOP_LEVEL_EXCEPTION_FILTER) = SetUnhandledExceptionFilter;
 static LPTOP_LEVEL_EXCEPTION_FILTER WINAPI SetUnhandledExceptionFilter_detour(LPTOP_LEVEL_EXCEPTION_FILTER lpTopLevelExceptionFilter)
 {
-	DWORD_PTR base_addr = (DWORD_PTR)GetModuleHandle(NULL);
-
-	if ((DWORD_PTR)lpTopLevelExceptionFilter == (base_addr + 0x51e9e0))
+	if ((DWORD_PTR)lpTopLevelExceptionFilter == (Address(ModAPI::ChooseAddress(0x0091eca0, 0x0091e9e0))))
 	{
 		return SetUnhandledExceptionFilter_real(UnhandledExceptionHandler);
 	}
