@@ -49,6 +49,31 @@ static_detour(CreatureStageFunction1Detour, bool(void*, void*, void*)) {
 	}
 };
 
+// the game crashes when you try to socialize
+// without any social abilities, i.e with the bot parts
+// it happens because function 0x00c047d0 (patched)
+// returns nullptr and the game not expecting it,
+// considering it's in the middle of the function,
+// try to catch the exception and return 0
+// TODO: maybe rewrite the function in the future?
+static_detour(CreatureStageFunction2Detour, int(void*, void*)) {
+	int detoured(void* arg1, void* arg2)
+	{
+		__try
+		{
+			return original_function(arg1, arg2);
+		}
+		__except ((	// ensure it's an access violation
+					GetExceptionCode() == EXCEPTION_ACCESS_VIOLATION &&
+					// and that it matches the exception address that we're expecting
+					GetExceptionInformation()->ExceptionRecord->ExceptionAddress == (PVOID)Address(ModAPI::ChooseAddress(0x00d1e9ae, 0x00d1f6ee))) ?
+					EXCEPTION_EXECUTE_HANDLER : EXCEPTION_CONTINUE_SEARCH)
+		{
+			return 0;
+		}
+	}
+};
+
 // Tribal stage
 //
 
@@ -108,8 +133,8 @@ void Dispose()
 void AttachDetours()
 {
 	CreatureStageFunction1Detour::attach(Address(ModAPI::ChooseAddress(0x00d65140, 0x00d65be0)));
+	CreatureStageFunction2Detour::attach(Address(ModAPI::ChooseAddress(0x00d1e910, 0x00d1f650)));
 	TribalStageFunction1Detour::attach(Address(ModAPI::ChooseAddress(0x00d71c90, 0x00d72720)));
-
 
 #ifdef _DEBUG
 	DetourAttach(&(PVOID&)SetUnhandledExceptionFilter_real, SetUnhandledExceptionFilter_detour);
