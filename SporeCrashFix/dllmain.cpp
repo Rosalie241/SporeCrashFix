@@ -28,6 +28,9 @@ static void DisplayError(const char* fmt, ...)
 	MessageBoxA(NULL, buf, "SporeCrashFix", MB_OK | MB_ICONERROR);
 }
 
+// dummy class for detours
+class someClass {};
+
 //
 // Detoured Functions
 //
@@ -37,7 +40,8 @@ static void DisplayError(const char* fmt, ...)
 
 // The game seems to crash when the player dies when it has a 'buddy',
 // the crash happens when arg3 is a nullptr
-static_detour(CreatureStageFunction1Detour, bool(void*, void*, void*)) {
+static_detour(CreatureStageFunction1Detour, bool(void*, void*, void*))
+{
 	bool detoured(void* arg1, void* arg2, void* arg3)
 	{
 		if (arg3 == nullptr)
@@ -56,7 +60,8 @@ static_detour(CreatureStageFunction1Detour, bool(void*, void*, void*)) {
 // considering it's in the middle of the function,
 // try to catch the exception and return 0
 // TODO: maybe rewrite the function in the future?
-static_detour(CreatureStageFunction2Detour, int(void*, void*)) {
+static_detour(CreatureStageFunction2Detour, int(void*, void*))
+{
 	int detoured(void* arg1, void* arg2)
 	{
 		__try
@@ -79,7 +84,8 @@ static_detour(CreatureStageFunction2Detour, int(void*, void*)) {
 
 // The game seems to crash randomly in the tribal stage,
 // the crash happens when arg3 is a nullptr
-static_detour(TribalStageFunction1Detour, void* (void*, void*, void*, void*)) {
+static_detour(TribalStageFunction1Detour, void* (void*, void*, void*, void*))
+{
 	void* detoured(void* arg1, void* arg2, void* arg3, void* arg4)
 	{
 		if (arg3 == nullptr)
@@ -88,6 +94,32 @@ static_detour(TribalStageFunction1Detour, void* (void*, void*, void*, void*)) {
 		}
 
 		return original_function(arg1, arg2, arg3, arg4);
+	}
+};
+
+// Adventures
+//
+
+// the game seems to crash due to object/collision related things
+// i.e in the adventure called "Anastettu Kupla", it crashes due
+// to an access violation in the middle of the function,
+// so just try to catch the exception and do nothing
+member_detour(AdventureFunction1Detour, someClass, void(void*, void*, void*, void*))
+{
+	void detoured(void* arg1, void* arg2, void* arg3, void* arg4)
+	{
+		__try
+		{
+			return original_function(this, arg1, arg2, arg3, arg4);
+		}
+		__except ((	// ensure it's an access violation
+					GetExceptionCode() == EXCEPTION_ACCESS_VIOLATION &&
+					// and that it matches the exception address that we're expecting
+					GetExceptionInformation()->ExceptionRecord->ExceptionAddress == (PVOID)Address(ModAPI::ChooseAddress(0x00b83851, 0x00b840a1))) ?
+					EXCEPTION_EXECUTE_HANDLER : EXCEPTION_CONTINUE_SEARCH)
+		{
+			return;
+		}
 	}
 };
 
@@ -135,6 +167,7 @@ void AttachDetours()
 	CreatureStageFunction1Detour::attach(Address(ModAPI::ChooseAddress(0x00d65140, 0x00d65be0)));
 	CreatureStageFunction2Detour::attach(Address(ModAPI::ChooseAddress(0x00d1e910, 0x00d1f650)));
 	TribalStageFunction1Detour::attach(Address(ModAPI::ChooseAddress(0x00d71c90, 0x00d72720)));
+	AdventureFunction1Detour::attach(Address(ModAPI::ChooseAddress(0x00b83540, 0x00b83d90)));
 
 #ifdef _DEBUG
 	DetourAttach(&(PVOID&)SetUnhandledExceptionFilter_real, SetUnhandledExceptionFilter_detour);
