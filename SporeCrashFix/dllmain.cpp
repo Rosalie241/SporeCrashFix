@@ -97,6 +97,29 @@ static_detour(TribalStageFunction1Detour, void* (void*, void*, void*, void*))
 	}
 };
 
+//
+//Space Stage
+//
+
+//The game sometimes crashes when destroying colonies in the space stage.
+//It happens when either arg1 or arg2 are nullptr, so just return false when this is the case.
+member_detour(SpaceStageFunction1Detour, Simulator::cRelationshipManager, bool(Simulator::cEmpire*, Simulator::cEmpire*))
+{
+	bool detoured(Simulator::cEmpire * arg1, Simulator::cEmpire * arg2)
+	{
+		if (arg1 == nullptr || arg2 == nullptr)
+		{
+			return false;
+		}
+		else
+		{
+			return original_function(this, arg1, arg2);
+		}
+	}
+};
+
+
+
 // Adventures
 //
 
@@ -167,6 +190,7 @@ void AttachDetours()
 	CreatureStageFunction1Detour::attach(Address(ModAPI::ChooseAddress(0x00d65140, 0x00d65be0)));
 	CreatureStageFunction2Detour::attach(Address(ModAPI::ChooseAddress(0x00d1e910, 0x00d1f650)));
 	TribalStageFunction1Detour::attach(Address(ModAPI::ChooseAddress(0x00d71c90, 0x00d72720)));
+	SpaceStageFunction1Detour::attach(GetAddress(Simulator::cRelationshipManager, IsAllied));
 	AdventureFunction1Detour::attach(Address(ModAPI::ChooseAddress(0x00b83540, 0x00b83d90)));
 
 #ifdef _DEBUG
