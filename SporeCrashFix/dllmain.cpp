@@ -97,12 +97,11 @@ static_detour(TribalStageFunction1Detour, void* (void*, void*, void*, void*))
 	}
 };
 
-//
-//Space Stage
+// Space Stage
 //
 
-//The game sometimes crashes when destroying colonies in the space stage.
-//It happens when either arg1 or arg2 are nullptr, so just return false when this is the case.
+// The game sometimes crashes when destroying colonies in the space stage.
+// It happens when either arg1 or arg2 are nullptr, so just return false when this is the case.
 member_detour(SpaceStageFunction1Detour, Simulator::cRelationshipManager, bool(Simulator::cEmpire*, Simulator::cEmpire*))
 {
 	bool detoured(Simulator::cEmpire * arg1, Simulator::cEmpire * arg2)
