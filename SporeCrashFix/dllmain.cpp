@@ -104,16 +104,14 @@ static_detour(TribalStageFunction1Detour, void* (void*, void*, void*, void*))
 // It happens when either arg1 or arg2 are nullptr, so just return false when this is the case.
 member_detour(SpaceStageFunction1Detour, Simulator::cRelationshipManager, bool(Simulator::cEmpire*, Simulator::cEmpire*))
 {
-	bool detoured(Simulator::cEmpire * arg1, Simulator::cEmpire * arg2)
+	bool detoured(Simulator::cEmpire* arg1, Simulator::cEmpire* arg2)
 	{
 		if (arg1 == nullptr || arg2 == nullptr)
 		{
 			return false;
 		}
-		else
-		{
-			return original_function(this, arg1, arg2);
-		}
+		
+		return original_function(this, arg1, arg2);
 	}
 };
 
