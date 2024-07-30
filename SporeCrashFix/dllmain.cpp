@@ -145,6 +145,24 @@ member_detour(AdventureFunction1Detour, someClass, void(void*, void*, void*, voi
 	}
 };
 
+// Misc
+//
+
+// the game crashes when using the "setconsequencetrait" cheat in the main menu,
+// it crashes because this is nullptr
+member_detour(MiscFunction1Detour, someClass, void(int, void*))
+{
+	void detoured(int arg1, void* arg2)
+	{
+		if (this == nullptr)
+		{
+			return;
+		}
+
+		return original_function(this, arg1, arg2);
+	}
+};
+
 #ifdef _DEBUG
 LONG WINAPI UnhandledExceptionHandler(_EXCEPTION_POINTERS* ExceptionInfo)
 {
@@ -191,6 +209,7 @@ void AttachDetours()
 	TribalStageFunction1Detour::attach(Address(ModAPI::ChooseAddress(0x00d71c90, 0x00d72720)));
 	SpaceStageFunction1Detour::attach(GetAddress(Simulator::cRelationshipManager, IsAllied));
 	AdventureFunction1Detour::attach(Address(ModAPI::ChooseAddress(0x00b83540, 0x00b83d90)));
+	MiscFunction1Detour::attach(Address(ModAPI::ChooseAddress(0x00c74f20, 0x00c75e60)));
 
 #ifdef _DEBUG
 	DetourAttach(&(PVOID&)SetUnhandledExceptionFilter_real, SetUnhandledExceptionFilter_detour);
