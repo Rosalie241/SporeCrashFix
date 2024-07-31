@@ -161,6 +161,67 @@ member_detour(MiscFunction1Detour, someClass, void(int, void*))
 	}
 };
 
+
+
+// interesting functions:
+// FUN_00ef3280 (assetviewer related?)
+// RVA AF372F is the loop it gets stuck in and causes OOM
+// AF36D0
+// it calls RVA 4DF700 which is Resource::cResourceManager::GetResource
+// 
+// RVA 485689 calls  FUN_00ef3280....
+// message ID 061205E6....
+
+
+#include <psapi.h>
+member_detour(TestFunction2Detour, someClass, bool(const ResourceKey& name, ResourceObjectPtr* ppDst, void* factoryData, Resource::Database* pDatabase, Resource::IResourceFactory* pFactory, const ResourceKey* pCacheName))
+{
+	bool detoured(const ResourceKey& name, ResourceObjectPtr* ppDst, void* factoryData, Resource::Database* pDatabase, Resource::IResourceFactory* pFactory, const ResourceKey* pCacheName)
+	{
+		static int count = 0;
+		static bool tmp = false;
+
+		// only check memory usage every 10 calls...
+		/*if (count++ > 10)
+		{
+
+			count = 0;
+		}*/
+
+		PROCESS_MEMORY_COUNTERS_EX2 memoryCounters;
+		memoryCounters.cb = sizeof(PROCESS_MEMORY_COUNTERS_EX2);
+
+		if (GetProcessMemoryInfo(GetCurrentProcess(), (PPROCESS_MEMORY_COUNTERS)&memoryCounters, memoryCounters.cb))
+		{
+			// TODO: is this correct??
+			if (memoryCounters.PrivateUsage > 1653552640)
+			{
+				if (!tmp)
+				{
+					DisplayError("deploying hack!\n");
+					tmp = true;
+				}
+				return false;
+			}
+		}
+
+		tmp = false;
+		return original_function(this, name, ppDst, factoryData, pDatabase, pFactory, pCacheName);
+	}
+};
+
+/*
+member_detour(TestFunction3Detour, someClass, void(void*, void*, void*, void*, void*))
+{
+	void detoured(void* arg1, void* arg2, void* arg3, void* arg4, void* arg5)
+	{
+
+			DisplayError("crash function!");
+			return original_function(this, arg1, arg2, arg3, arg4, arg5);
+
+	}
+};*/
+
 #ifdef _DEBUG
 LONG WINAPI UnhandledExceptionHandler(_EXCEPTION_POINTERS* ExceptionInfo)
 {
@@ -209,6 +270,8 @@ void AttachDetours()
 	AdventureFunction1Detour::attach(Address(ModAPI::ChooseAddress(0x00b83540, 0x00b83d90)));
 	MiscFunction1Detour::attach(Address(ModAPI::ChooseAddress(0x00c74f20, 0x00c75e60)));
 
+	TestFunction2Detour::attach(Address(ModAPI::ChooseAddress(0x008df700, 0x008df700)));
+	//TestFunction3Detour::attach(Address(ModAPI::ChooseAddress(0x005e7860, 0x005e7860)));
 #ifdef _DEBUG
 	DetourAttach(&(PVOID&)SetUnhandledExceptionFilter_real, SetUnhandledExceptionFilter_detour);
 #endif // _DEBUG
