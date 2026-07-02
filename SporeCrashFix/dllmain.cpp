@@ -11,6 +11,7 @@
 // dllmain.cpp : Defines the entry point for the DLL application.
 #define _CRT_SECURE_NO_WARNINGS
 #include "stdafx.h"
+#include <Spore/Simulator/cScenarioResource.h>
 
 //
 // Helper functions
@@ -143,6 +144,29 @@ member_detour(AdventureFunction1Detour, someClass, void(void*, void*, void*, voi
 	}
 };
 
+// Not specifically a crash, but this resets the camera to a sensible default position if an adventure is loaded with a camera position of NaN.
+member_detour(AdventureFunction2Detour, Simulator::cScenarioResource, bool(IO::IStream* pStream))
+{
+	bool detoured(IO::IStream* pStream)
+	{
+		// Only do anything if the function returns true, as this means the resource was loaded correctly.
+		if (original_function(this, pStream))
+		{
+			// If the camera position is NaN, then fix the camera to sensible defaults.
+			if (std::isnan(this->mCameraTarget.x) || std::isnan(this->mCameraTarget.y) || std::isnan(this->mCameraTarget.z))
+			{
+				this->mCameraTarget = Vector3(0, 0, 500);
+				this->mCameraOrientation = Math::Quaternion();
+				this->mfCameraDistance = 100;
+			}
+			// It would've returned true now, so do so.
+			return true;
+		}
+		// It would've returned false now, so do so.
+		return false;
+	}
+};
+
 // Misc
 //
 
@@ -207,6 +231,7 @@ void AttachDetours()
 	TribalStageFunction1Detour::attach(Address(ModAPI::ChooseAddress(0x00d71c90, 0x00d72720)));
 	SpaceStageFunction1Detour::attach(GetAddress(Simulator::cRelationshipManager, IsAllied));
 	AdventureFunction1Detour::attach(Address(ModAPI::ChooseAddress(0x00b83540, 0x00b83d90)));
+	AdventureFunction2Detour::attach(GetAddress(Simulator::cScenarioResource, Read));
 	MiscFunction1Detour::attach(Address(ModAPI::ChooseAddress(0x00c74f20, 0x00c75e60)));
 
 #ifdef _DEBUG
