@@ -1,6 +1,6 @@
 //
 // SporeCrashFix - https://github.com/Rosalie241/SporeFixCrash
-//  Copyright (C) 2021 Rosalie Wanders <rosalie@mailbox.org>
+//  Copyright (C) 2026 Rosalie Wanders <rosalie@mailbox.org>
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU General Public License version 3.
@@ -185,6 +185,26 @@ member_detour(MiscFunction1Detour, someClass, void(int, void*))
 	}
 };
 
+// the game crashes when a variable in EditorRigblock is nullptr
+member_detour(MiscFunction2Detour, someClass, bool(void*, void*, void*, void*, void*, void*, void*, void*))
+{
+	bool detoured(void* arg1, void* arg2, void* arg3, void* arg4, void* arg5, void* arg6, void* arg7, void* arg8)
+	{
+		__try
+		{
+			return original_function(this, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
+		}
+		__except ((	// ensure it's an access violation
+					GetExceptionCode() == EXCEPTION_ACCESS_VIOLATION &&
+					// and that it matches the exception address that we're expecting
+					GetExceptionInformation()->ExceptionRecord->ExceptionAddress == (PVOID)Address(ModAPI::ChooseAddress(0x00441bbb, 0x00441f3b))) ?
+					EXCEPTION_EXECUTE_HANDLER : EXCEPTION_CONTINUE_SEARCH)
+		{
+			return false;
+		}
+	}
+};
+
 #ifdef _DEBUG
 LONG WINAPI UnhandledExceptionHandler(_EXCEPTION_POINTERS* ExceptionInfo)
 {
@@ -208,22 +228,6 @@ static LPTOP_LEVEL_EXCEPTION_FILTER WINAPI SetUnhandledExceptionFilter_detour(LP
 // Exported Functions
 //
 
-void Initialize()
-{
-	// This method is executed when the game starts, before the user interface is shown
-	// Here you can do things such as:
-	//  - Add new cheats
-	//  - Add new simulator classes
-	//  - Add new game modes
-	//  - Add new space tools
-	//  - Change materials
-}
-
-void Dispose()
-{
-	// This method is called when the game is closing
-}
-
 void AttachDetours()
 {
 	CreatureStageFunction1Detour::attach(Address(ModAPI::ChooseAddress(0x00d65140, 0x00d65be0)));
@@ -233,13 +237,11 @@ void AttachDetours()
 	AdventureFunction1Detour::attach(Address(ModAPI::ChooseAddress(0x00b83540, 0x00b83d90)));
 	AdventureFunction2Detour::attach(GetAddress(Simulator::cScenarioResource, Read));
 	MiscFunction1Detour::attach(Address(ModAPI::ChooseAddress(0x00c74f20, 0x00c75e60)));
+	MiscFunction2Detour::attach(Address(ModAPI::ChooseAddress(0x00441590, 0x00441910)));
 
 #ifdef _DEBUG
 	DetourAttach(&(PVOID&)SetUnhandledExceptionFilter_real, SetUnhandledExceptionFilter_detour);
 #endif // _DEBUG
-
-	// Call the attach() method on any detours you want to add
-	// For example: cViewer_SetRenderType_detour::attach(GetAddress(cViewer, SetRenderType));
 }
 
 
@@ -252,9 +254,6 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 	switch (ul_reason_for_call)
 	{
 	case DLL_PROCESS_ATTACH:
-		ModAPI::AddPostInitFunction(Initialize);
-		ModAPI::AddDisposeFunction(Dispose);
-
 		PrepareDetours(hModule);
 		AttachDetours();
 		CommitDetours();

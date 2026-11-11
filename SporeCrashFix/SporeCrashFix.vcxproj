@@ -82,6 +82,9 @@
     msbuild "$(SporeSdkPath)Spore ModAPI" /t:BuildDlls /p:BuildVer=180 /p:Config=$(Configuration) /p:Platform=$(Platform) /m
 )</Command>
     </PreBuildEvent>
+    <PostBuildEvent>
+      <Command>copy /Y "$(TargetPath)" "C:\GOG Games\SPORE\SporeModLoader\ModLibs\"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -105,6 +108,9 @@
     msbuild "$(SporeSdkPath)Spore ModAPI" /t:BuildDlls /p:BuildVer=180 /p:Config=$(Configuration) /p:Platform=$(Platform) /m
 )</Command>
     </PreBuildEvent>
+    <PostBuildEvent>
+      <Command>copy /Y "$(TargetPath)" "C:\GOG Games\SPORE\SporeModLoader\ModLibs\"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
