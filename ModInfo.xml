@@ -1,7 +1,8 @@
 <mod displayName="SporeCrashFix" 
 	unique="SporeCrashFix" 
 	description="This is a Spore mod which fixes multiple crashes" 
-	installerSystemVersion="1.0.1.1" 
+	installerSystemVersion="1.0.1.3" 
+	version="1.0.0"
 	dllsBuild="2.5.20">
 	<prerequisite>SporeCrashFix.dll</prerequisite>
 </mod>
