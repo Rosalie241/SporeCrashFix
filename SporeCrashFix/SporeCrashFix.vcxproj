@@ -83,7 +83,9 @@
 )</Command>
     </PreBuildEvent>
     <PostBuildEvent>
-      <Command>copy /Y "$(TargetPath)" "C:\GOG Games\SPORE\SporeModLoader\ModLibs\"</Command>
+      <Command>if exist "C:\GOG Games\SPORE\SporeModLoader\ModLibs\" (
+    copy /Y "$(TargetPath)" "C:\GOG Games\SPORE\SporeModLoader\ModLibs\"
+)</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -109,7 +111,9 @@
 )</Command>
     </PreBuildEvent>
     <PostBuildEvent>
-      <Command>copy /Y "$(TargetPath)" "C:\GOG Games\SPORE\SporeModLoader\ModLibs\"</Command>
+      <Command>if exist "C:\GOG Games\SPORE\SporeModLoader\ModLibs\" (
+    copy /Y "$(TargetPath)" "C:\GOG Games\SPORE\SporeModLoader\ModLibs\"
+)</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
