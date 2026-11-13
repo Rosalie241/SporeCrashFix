@@ -78,8 +78,12 @@
       <AdditionalDependencies>detours.lib;SporeModAPIBase.lib;SporeModAPI.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
-      <Command>if NOT EXIST "$(SporeSdkPath)dll\$(Configuration)\SporeModAPI.lib" (
-    msbuild "$(SporeSdkPath)Spore ModAPI" /t:BuildDlls /p:BuildVer=180 /p:Config=$(Configuration) /p:Platform=$(Platform) /m
+      <Command>if not exist "$(SporeSdkPath)lib\$(Configuration)\SporeModAPIBase.lib" (
+    msbuild "$(SporeSdkPath)Spore ModAPI" /p:Configuration=$(Configuration) /p:Platform=Win32 /p:SDK_BUILD_VER=180 /p:EXECUTABLE_TYPE=0 /m
+)
+
+if not exist "$(SporeSdkPath)dll\$(Configuration)\SporeModAPI.lib" (
+    msbuild "$(SporeSdkPath)Spore ModAPI" /t:BuildDlls /p:BuildVer=280 /p:Config=$(Configuration) /p:Platform=$(Platform) /m
 )</Command>
     </PreBuildEvent>
     <PostBuildEvent>
@@ -106,8 +110,12 @@
       <AdditionalDependencies>detours.lib;SporeModAPIBase.lib;SporeModAPI.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
-      <Command>if NOT EXIST "$(SporeSdkPath)dll\$(Configuration)\SporeModAPI.lib" (
-    msbuild "$(SporeSdkPath)Spore ModAPI" /t:BuildDlls /p:BuildVer=180 /p:Config=$(Configuration) /p:Platform=$(Platform) /m
+      <Command>if not exist "$(SporeSdkPath)lib\$(Configuration)\SporeModAPIBase.lib" (
+    msbuild "$(SporeSdkPath)Spore ModAPI" /p:Configuration=$(Configuration) /p:Platform=Win32 /p:SDK_BUILD_VER=180 /p:EXECUTABLE_TYPE=0 /m
+)
+
+if not exist "$(SporeSdkPath)dll\$(Configuration)\SporeModAPI.lib" (
+    msbuild "$(SporeSdkPath)Spore ModAPI" /t:BuildDlls /p:BuildVer=280 /p:Config=$(Configuration) /p:Platform=$(Platform) /m
 )</Command>
     </PreBuildEvent>
     <PostBuildEvent>
